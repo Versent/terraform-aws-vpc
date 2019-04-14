@@ -28,3 +28,6 @@ _readme:
 	$(SCAFOLD) generate --resource-type readme .
 
 
+_grip:
+	grip -b
+
