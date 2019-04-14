@@ -1,0 +1,59 @@
+---
+name: terraform-aws-vpc
+github_user: marcelocorreia
+git_repo: terraform-aws-vpc
+github: https://github.com/{{ .github_user }}
+#logo: https://i2.wp.com/killscreen.com/wp-content/uploads/2016/08/bastion-gameplay.jpg?fit=700%2C396&ssl=1
+docs: https://your.docs.com
+linkedin: https://www.linkedin.com/in/marcelocorreia/
+website: https://your.website.com
+slack: https://your.slack.com/
+email: EMAIL@CHANGE.ME
+blueprint: terraform/module
+
+overview: |
+  Terraform module for Network Management
+
+#extra_content: |
+#  ### Extra
+
+#description_file: path.to.description
+
+description: |
+  #### Terraform module for Network Management on AWS.
+  **These types of resources are supported:**
+  * [VPC](https://www.terraform.io/docs/providers/aws/r/vpc.html)
+  * [Subnet](https://www.terraform.io/docs/providers/aws/r/subnet.html)
+  * [Route](https://www.terraform.io/docs/providers/aws/r/route.html)
+  * [Route table](https://www.terraform.io/docs/providers/aws/r/route_table.html)
+  * [Internet Gateway](https://www.terraform.io/docs/providers/aws/r/internet_gateway.html)
+  * [Network ACL](https://www.terraform.io/docs/providers/aws/r/network_acl.html)
+  * [NAT Gateway](https://www.terraform.io/docs/providers/aws/r/nat_gateway.html)
+  * [VPN Gateway](https://www.terraform.io/docs/providers/aws/r/vpn_gateway.html)
+  * [VPC Endpoint](https://www.terraform.io/docs/providers/aws/r/vpc_endpoint.html):
+  * Gateway: S3, DynamoDB
+  * Interface: EC2, SSM, EC2 Messages, SSM Messages, ECR API, ECR DKR, API Gateway
+  * [RDS DB Subnet Group](https://www.terraform.io/docs/providers/aws/r/db_subnet_group.html)
+  * [ElastiCache Subnet Group](https://www.terraform.io/docs/providers/aws/r/elasticache_subnet_group.html)
+  * [Redshift Subnet Group](https://www.terraform.io/docs/providers/aws/r/redshift_subnet_group.html)
+  * [DHCP Options Set](https://www.terraform.io/docs/providers/aws/r/vpc_dhcp_options.html)
+  * [Default VPC](https://www.terraform.io/docs/providers/aws/r/default_vpc.html)
+  * [Default Network ACL](https://www.terraform.io/docs/providers/aws/r/default_network_acl.html)
+
+shields:
+  - https://img.shields.io/github/release/{{ .github_user }}/terraform-aws-quick-bastion.svg?flat-square
+  - https://img.shields.io/github/languages/count/{{ .github_user }}/terraform-aws-quick-bastion.svg
+  - https://img.shields.io/github/languages/top/{{ .github_user }}/terraform-aws-quick-bastion.svg
+
+tldr:
+  - '[Overview](#overview)'
+  - '[Description](#description)'
+  - '[Usage](#usage)'
+  - '[Inputs](#inputs)'
+  - '[Outputs](#outputs)'
+  - '[License](#license)'
+
+usage_file: examples/complete-vpc/main.tf
+
+licenses:
+  - apache-license

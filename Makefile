@@ -1,7 +1,30 @@
-.PHONY: changelog release
+AWS_PROFILE := one
 
-changelog:
-	git-chglog -o CHANGELOG.md --next-tag `semtag final -s minor -o`
+init: _creds fmt
+	cd example && terraform init
 
-release:
-	semtag final -s minor
+plan: _creds init
+	cd example && terraform plan
+
+apply: _creds fmt
+	cd example && terraform apply --auto-approve
+
+destroy: _creds init
+	cd example && terraform destroy --auto-approve
+
+state:
+	cd example && terraform state list
+
+fmt:
+	terraform fmt
+
+_creds:
+	$(eval export AWS_PROFILE=$(AWS_PROFILE))
+
+
+SCAFOLD := badwolf
+_readme:
+	terraform-docs md . > io.md
+	$(SCAFOLD) generate --resource-type readme .
+
+
