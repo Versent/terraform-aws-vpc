@@ -204,6 +204,23 @@ resource "aws_subnet" "private" {
   tags = "${merge(map("Name", format("%s-${var.private_subnet_suffix}-%s", var.name, element(var.azs, count.index))), var.tags, var.private_subnet_tags)}"
 }
 
+#################
+# restricted subnet
+#################
+resource "aws_subnet" "restricted" {
+  count = "${var.create_vpc && length(var.restricted_subnets) > 0 ? length(var.restricted_subnets) : 0}"
+
+  vpc_id            = "${local.vpc_id}"
+  cidr_block        = "${var.restricted_subnets[count.index]}"
+  availability_zone = "${element(var.azs, count.index)}"
+
+  tags = "${merge(map("Name", format("%s-${var.restricted_subnet_suffix}-%s", var.name, element(var.azs, count.index))), var.tags, var.restricted_subnet_tags)}"
+}
+
+
+
+
+
 ##################
 # Database subnet
 ##################
