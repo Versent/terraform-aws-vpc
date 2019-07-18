@@ -12,14 +12,11 @@ locals {
   nat_gateway_count = var.single_nat_gateway ? 1 : var.one_nat_gateway_per_az ? length(var.azs) : local.max_subnet_length
 
   # Use `local.vpc_id` to give a hint to Terraform that subnets should be deleted before secondary CIDR blocks can be free!
-  vpc_id = element(
-    concat(
+  vpc_id = concat(
       aws_vpc_ipv4_cidr_block_association.this.*.vpc_id,
       aws_vpc.this.*.id,
       [""],
-    ),
-    0,
-  )
+    )[0]
 }
 
 ######
@@ -36,7 +33,7 @@ resource "aws_vpc" "this" {
 
   tags = merge(
     {
-      "Name" = format("%s", var.name)
+      Name = format("%s", var.name)
     },
     var.tags,
     var.vpc_tags,
@@ -65,7 +62,7 @@ resource "aws_vpc_dhcp_options" "this" {
 
   tags = merge(
     {
-      "Name" = format("%s", var.name)
+      Name = format("%s", var.name)
     },
     var.tags,
     var.dhcp_options_tags,
@@ -92,7 +89,7 @@ resource "aws_internet_gateway" "this" {
 
   tags = merge(
     {
-      "Name" = format("%s", var.name)
+      Name = format("%s", var.name)
     },
     var.tags,
     var.igw_tags,
@@ -109,7 +106,7 @@ resource "aws_route_table" "public" {
 
   tags = merge(
     {
-      "Name" = format("%s-${var.public_subnet_suffix}", var.name)
+      Name =format("%s-${var.public_subnet_suffix}", var.name)
     },
     var.tags,
     var.public_route_table_tags,
@@ -139,7 +136,7 @@ resource "aws_route_table" "private" {
 
   tags = merge(
     {
-      "Name" = var.single_nat_gateway ? "${var.name}-${var.private_subnet_suffix}" : format(
+      Name = var.single_nat_gateway ? "${var.name}-${var.private_subnet_suffix}" : format(
         "%s-${var.private_subnet_suffix}-%s",
         var.name,
         element(var.azs, count.index),
@@ -168,7 +165,7 @@ resource "aws_route_table" "database" {
     var.tags,
     var.database_route_table_tags,
     {
-      "Name" = "${var.name}-${var.database_subnet_suffix}"
+      Name = "${var.name}-${var.database_subnet_suffix}"
     },
   )
 }
@@ -208,7 +205,7 @@ resource "aws_route_table" "redshift" {
     var.tags,
     var.redshift_route_table_tags,
     {
-      "Name" = "${var.name}-${var.redshift_subnet_suffix}"
+      Name = "${var.name}-${var.redshift_subnet_suffix}"
     },
   )
 }
@@ -225,7 +222,7 @@ resource "aws_route_table" "elasticache" {
     var.tags,
     var.elasticache_route_table_tags,
     {
-      "Name" = "${var.name}-${var.elasticache_subnet_suffix}"
+      Name ="${var.name}-${var.elasticache_subnet_suffix}"
     },
   )
 }
@@ -240,7 +237,7 @@ resource "aws_route_table" "intra" {
 
   tags = merge(
     {
-      "Name" = "${var.name}-${var.intra_subnet_suffix}"
+      Name ="${var.name}-${var.intra_subnet_suffix}"
     },
     var.tags,
     var.intra_route_table_tags,
@@ -254,13 +251,13 @@ resource "aws_subnet" "public" {
   count = var.create_vpc && length(var.public_subnets) > 0 && false == var.one_nat_gateway_per_az || length(var.public_subnets) >= length(var.azs) ? length(var.public_subnets) : 0
 
   vpc_id                  = local.vpc_id
-  cidr_block              = element(concat(var.public_subnets, [""]), count.index)
-  availability_zone       = element(var.azs, count.index)
+  cidr_block              = concat(var.public_subnets, [""])[count.index]
+  availability_zone       = var.azs[count.index]
   map_public_ip_on_launch = var.map_public_ip_on_launch
 
   tags = merge(
     {
-      "Name" = format(
+      Name =format(
         "%s-${var.public_subnet_suffix}-%s",
         var.name,
         element(var.azs, count.index),
@@ -279,14 +276,14 @@ resource "aws_subnet" "private" {
 
   vpc_id            = local.vpc_id
   cidr_block        = var.private_subnets[count.index]
-  availability_zone = element(var.azs, count.index)
+  availability_zone = var.azs[count.index]
 
   tags = merge(
     {
-      "Name" = format(
+      Name =format(
         "%s-${var.private_subnet_suffix}-%s",
         var.name,
-        element(var.azs, count.index),
+        var.azs[count.index],
       )
     },
     var.tags,
@@ -302,14 +299,14 @@ resource "aws_subnet" "restricted" {
 
   vpc_id            = local.vpc_id
   cidr_block        = var.restricted_subnets[count.index]
-  availability_zone = element(var.azs, count.index)
+  availability_zone = var.azs[count.index]
 
   tags = merge(
     {
-      "Name" = format(
+      Name =format(
         "%s-${var.restricted_subnet_suffix}-%s",
         var.name,
-        element(var.azs, count.index),
+        var.azs[count.index],
       )
     },
     var.tags,
@@ -325,14 +322,14 @@ resource "aws_subnet" "database" {
 
   vpc_id            = local.vpc_id
   cidr_block        = var.database_subnets[count.index]
-  availability_zone = element(var.azs, count.index)
+  availability_zone = var.azs[count.index]
 
   tags = merge(
     {
-      "Name" = format(
+      Name =format(
         "%s-${var.database_subnet_suffix}-%s",
         var.name,
-        element(var.azs, count.index),
+        var.azs[count.index],
       )
     },
     var.tags,
@@ -349,7 +346,7 @@ resource "aws_db_subnet_group" "database" {
 
   tags = merge(
     {
-      "Name" = format("%s", var.name)
+      Name =format("%s", var.name)
     },
     var.tags,
     var.database_subnet_group_tags,
@@ -364,14 +361,14 @@ resource "aws_subnet" "redshift" {
 
   vpc_id            = local.vpc_id
   cidr_block        = var.redshift_subnets[count.index]
-  availability_zone = element(var.azs, count.index)
+  availability_zone = var.azs[count.index]
 
   tags = merge(
     {
-      "Name" = format(
+      Name =format(
         "%s-${var.redshift_subnet_suffix}-%s",
         var.name,
-        element(var.azs, count.index),
+        var.azs[count.index],
       )
     },
     var.tags,
@@ -388,7 +385,7 @@ resource "aws_redshift_subnet_group" "redshift" {
 
   tags = merge(
     {
-      "Name" = format("%s", var.name)
+      Name =format("%s", var.name)
     },
     var.tags,
     var.redshift_subnet_group_tags,
@@ -407,10 +404,10 @@ resource "aws_subnet" "elasticache" {
 
   tags = merge(
     {
-      "Name" = format(
+      Name =format(
         "%s-${var.elasticache_subnet_suffix}-%s",
         var.name,
-        element(var.azs, count.index),
+        var.azs[count.index],
       )
     },
     var.tags,
@@ -434,14 +431,14 @@ resource "aws_subnet" "intra" {
 
   vpc_id            = local.vpc_id
   cidr_block        = var.intra_subnets[count.index]
-  availability_zone = element(var.azs, count.index)
+  availability_zone = var.azs[count.index]
 
   tags = merge(
     {
-      "Name" = format(
+      Name =format(
         "%s-${var.intra_subnet_suffix}-%s",
         var.name,
-        element(var.azs, count.index),
+        var.azs[count.index],
       )
     },
     var.tags,
@@ -455,7 +452,7 @@ resource "aws_subnet" "intra" {
 resource "aws_default_network_acl" "this" {
   count = var.create_vpc && var.manage_default_network_acl ? 1 : 0
 
-  default_network_acl_id = element(concat(aws_vpc.this.*.default_network_acl_id, [""]), 0)
+  default_network_acl_id = concat(aws_vpc.this.*.default_network_acl_id, [""])[0]
 
   dynamic "ingress" {
     for_each = var.default_network_acl_ingress
@@ -498,7 +495,7 @@ resource "aws_default_network_acl" "this" {
 
   tags = merge(
     {
-      "Name" = format("%s", var.default_network_acl_name)
+      Name =format("%s", var.default_network_acl_name)
     },
     var.tags,
     var.default_network_acl_tags,
@@ -515,12 +512,12 @@ resource "aws_default_network_acl" "this" {
 resource "aws_network_acl" "public" {
   count = var.create_vpc && var.public_dedicated_network_acl && length(var.public_subnets) > 0 ? 1 : 0
 
-  vpc_id     = element(concat(aws_vpc.this.*.id, [""]), 0)
+  vpc_id     = concat(aws_vpc.this.*.id, [""])[0]
   subnet_ids = aws_subnet.public.*.id
 
   tags = merge(
     {
-      "Name" = format("%s-${var.public_subnet_suffix}", var.name)
+      Name =format("%s-${var.public_subnet_suffix}", var.name)
     },
     var.tags,
     var.public_acl_tags,
@@ -561,12 +558,12 @@ resource "aws_network_acl_rule" "public_outbound" {
 resource "aws_network_acl" "private" {
   count = var.create_vpc && var.private_dedicated_network_acl && length(var.private_subnets) > 0 ? 1 : 0
 
-  vpc_id     = element(concat(aws_vpc.this.*.id, [""]), 0)
+  vpc_id     = concat(aws_vpc.this.*.id, [""])[0]
   subnet_ids = aws_subnet.private.*.id
 
   tags = merge(
     {
-      "Name" = format("%s-${var.private_subnet_suffix}", var.name)
+      Name =format("%s-${var.private_subnet_suffix}", var.name)
     },
     var.tags,
     var.private_acl_tags,
@@ -607,12 +604,12 @@ resource "aws_network_acl_rule" "private_outbound" {
 resource "aws_network_acl" "intra" {
   count = var.create_vpc && var.intra_dedicated_network_acl && length(var.intra_subnets) > 0 ? 1 : 0
 
-  vpc_id     = element(concat(aws_vpc.this.*.id, [""]), 0)
+  vpc_id     = concat(aws_vpc.this.*.id, [""])[0]
   subnet_ids = aws_subnet.intra.*.id
 
   tags = merge(
     {
-      "Name" = format("%s-${var.intra_subnet_suffix}", var.name)
+      Name =format("%s-${var.intra_subnet_suffix}", var.name)
     },
     var.tags,
     var.intra_acl_tags,
@@ -653,12 +650,12 @@ resource "aws_network_acl_rule" "intra_outbound" {
 resource "aws_network_acl" "database" {
   count = var.create_vpc && var.database_dedicated_network_acl && length(var.database_subnets) > 0 ? 1 : 0
 
-  vpc_id     = element(concat(aws_vpc.this.*.id, [""]), 0)
+  vpc_id     = concat(aws_vpc.this.*.id, [""])[0]
   subnet_ids = aws_subnet.database.*.id
 
   tags = merge(
     {
-      "Name" = format("%s-${var.database_subnet_suffix}", var.name)
+      Name =format("%s-${var.database_subnet_suffix}", var.name)
     },
     var.tags,
     var.database_acl_tags,
@@ -699,12 +696,12 @@ resource "aws_network_acl_rule" "database_outbound" {
 resource "aws_network_acl" "redshift" {
   count = var.create_vpc && var.redshift_dedicated_network_acl && length(var.redshift_subnets) > 0 ? 1 : 0
 
-  vpc_id     = element(concat(aws_vpc.this.*.id, [""]), 0)
+  vpc_id     = concat(aws_vpc.this.*.id, [""])[0]
   subnet_ids = aws_subnet.redshift.*.id
 
   tags = merge(
     {
-      "Name" = format("%s-${var.redshift_subnet_suffix}", var.name)
+      Name =format("%s-${var.redshift_subnet_suffix}", var.name)
     },
     var.tags,
     var.redshift_acl_tags,
@@ -745,12 +742,12 @@ resource "aws_network_acl_rule" "redshift_outbound" {
 resource "aws_network_acl" "elasticache" {
   count = var.create_vpc && var.elasticache_dedicated_network_acl && length(var.elasticache_subnets) > 0 ? 1 : 0
 
-  vpc_id     = element(concat(aws_vpc.this.*.id, [""]), 0)
+  vpc_id     = concat(aws_vpc.this.*.id, [""])[0]
   subnet_ids = aws_subnet.elasticache.*.id
 
   tags = merge(
     {
-      "Name" = format("%s-${var.elasticache_subnet_suffix}", var.name)
+      Name =format("%s-${var.elasticache_subnet_suffix}", var.name)
     },
     var.tags,
     var.elasticache_acl_tags,
@@ -810,10 +807,10 @@ resource "aws_eip" "nat" {
 
   tags = merge(
     {
-      "Name" = format(
+      Name =format(
         "%s-%s",
         var.name,
-        element(var.azs, var.single_nat_gateway ? 0 : count.index),
+        var.azs[var.single_nat_gateway ? 0 : count.index],
       )
     },
     var.tags,
@@ -824,21 +821,15 @@ resource "aws_eip" "nat" {
 resource "aws_nat_gateway" "this" {
   count = var.create_vpc && var.enable_nat_gateway ? local.nat_gateway_count : 0
 
-  allocation_id = element(
-    local.nat_gateway_ips,
-    var.single_nat_gateway ? 0 : count.index,
-  )
-  subnet_id = element(
-    aws_subnet.public.*.id,
-    var.single_nat_gateway ? 0 : count.index,
-  )
+  allocation_id = local.nat_gateway_ips[var.single_nat_gateway ? 0 : count.index]
+  subnet_id = aws_subnet.public.*.id[var.single_nat_gateway ? 0 : count.index]
 
   tags = merge(
     {
-      "Name" = format(
+      Name =format(
         "%s-%s",
         var.name,
-        element(var.azs, var.single_nat_gateway ? 0 : count.index),
+        var.azs[var.single_nat_gateway ? 0 : count.index],
       )
     },
     var.tags,
@@ -851,9 +842,9 @@ resource "aws_nat_gateway" "this" {
 resource "aws_route" "private_nat_gateway" {
   count = var.create_vpc && var.enable_nat_gateway ? local.nat_gateway_count : 0
 
-  route_table_id         = element(aws_route_table.private.*.id, count.index)
+  route_table_id         = aws_route_table.private.*.id[count.index]
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = element(aws_nat_gateway.this.*.id, count.index)
+  nat_gateway_id         = aws_nat_gateway.this.*.id[count.index]
 
   timeouts {
     create = "5m"
@@ -880,14 +871,14 @@ resource "aws_vpc_endpoint_route_table_association" "private_s3" {
   count = var.create_vpc && var.enable_s3_endpoint ? local.nat_gateway_count : 0
 
   vpc_endpoint_id = aws_vpc_endpoint.s3[0].id
-  route_table_id  = element(aws_route_table.private.*.id, count.index)
+  route_table_id  = aws_route_table.private.*.id[count.index]
 }
 
 resource "aws_vpc_endpoint_route_table_association" "intra_s3" {
   count = var.create_vpc && var.enable_s3_endpoint && length(var.intra_subnets) > 0 ? 1 : 0
 
   vpc_endpoint_id = aws_vpc_endpoint.s3[0].id
-  route_table_id  = element(aws_route_table.intra.*.id, 0)
+  route_table_id  = aws_route_table.intra.*.id[0]
 }
 
 resource "aws_vpc_endpoint_route_table_association" "public_s3" {
@@ -917,14 +908,14 @@ resource "aws_vpc_endpoint_route_table_association" "private_dynamodb" {
   count = var.create_vpc && var.enable_dynamodb_endpoint ? local.nat_gateway_count : 0
 
   vpc_endpoint_id = aws_vpc_endpoint.dynamodb[0].id
-  route_table_id  = element(aws_route_table.private.*.id, count.index)
+  route_table_id  = aws_route_table.private.*.id[count.index]
 }
 
 resource "aws_vpc_endpoint_route_table_association" "intra_dynamodb" {
   count = var.create_vpc && var.enable_dynamodb_endpoint && length(var.intra_subnets) > 0 ? 1 : 0
 
   vpc_endpoint_id = aws_vpc_endpoint.dynamodb[0].id
-  route_table_id  = element(aws_route_table.intra.*.id, 0)
+  route_table_id  = aws_route_table.intra.*.id[0]
 }
 
 resource "aws_vpc_endpoint_route_table_association" "public_dynamodb" {
@@ -1143,67 +1134,52 @@ resource "aws_vpc_endpoint" "apigw" {
 resource "aws_route_table_association" "private" {
   count = var.create_vpc && length(var.private_subnets) > 0 ? length(var.private_subnets) : 0
 
-  subnet_id = element(aws_subnet.private.*.id, count.index)
-  route_table_id = element(
-    aws_route_table.private.*.id,
-    var.single_nat_gateway ? 0 : count.index,
-  )
+  subnet_id = aws_subnet.private.*.id[count.index]
+  route_table_id = aws_route_table.private.*.id[var.single_nat_gateway ? 0 : count.index]
 }
 
 resource "aws_route_table_association" "database" {
   count = var.create_vpc && length(var.database_subnets) > 0 ? length(var.database_subnets) : 0
 
-  subnet_id = element(aws_subnet.database.*.id, count.index)
-  route_table_id = element(
-    coalescelist(aws_route_table.database.*.id, aws_route_table.private.*.id),
-    var.single_nat_gateway || var.create_database_subnet_route_table ? 0 : count.index,
-  )
+  subnet_id = aws_subnet.database.*.id[count.index]
+  route_table_id = coalescelist(aws_route_table.database.*.id, aws_route_table.private.*.id)[var.single_nat_gateway || var.create_database_subnet_route_table ? 0 : count.index]
 }
 
 resource "aws_route_table_association" "redshift" {
   count = var.create_vpc && length(var.redshift_subnets) > 0 && false == var.enable_public_redshift ? length(var.redshift_subnets) : 0
 
-  subnet_id = element(aws_subnet.redshift.*.id, count.index)
-  route_table_id = element(
-    coalescelist(aws_route_table.redshift.*.id, aws_route_table.private.*.id),
-    var.single_nat_gateway || var.create_redshift_subnet_route_table ? 0 : count.index,
-  )
+  subnet_id = aws_subnet.redshift.*.id[count.index]
+  route_table_id = coalescelist(aws_route_table.redshift.*.id, aws_route_table.private.*.id)[var.single_nat_gateway || var.create_redshift_subnet_route_table ? 0 : count.index]
 }
 
 resource "aws_route_table_association" "redshift_public" {
   count = var.create_vpc && length(var.redshift_subnets) > 0 && var.enable_public_redshift ? length(var.redshift_subnets) : 0
 
-  subnet_id = element(aws_subnet.redshift.*.id, count.index)
-  route_table_id = element(
-    coalescelist(aws_route_table.redshift.*.id, aws_route_table.public.*.id),
-    var.single_nat_gateway || var.create_redshift_subnet_route_table ? 0 : count.index,
-  )
+  subnet_id = aws_subnet.redshift.*.id[count.index]
+  route_table_id = coalescelist(aws_route_table.redshift.*.id, aws_route_table.public.*.id)[var.single_nat_gateway || var.create_redshift_subnet_route_table ? 0 : count.index]
 }
 
 resource "aws_route_table_association" "elasticache" {
   count = var.create_vpc && length(var.elasticache_subnets) > 0 ? length(var.elasticache_subnets) : 0
 
-  subnet_id = element(aws_subnet.elasticache.*.id, count.index)
-  route_table_id = element(
-    coalescelist(
+  subnet_id = aws_subnet.elasticache.*.id[count.index]
+  route_table_id = coalescelist(
       aws_route_table.elasticache.*.id,
       aws_route_table.private.*.id,
-    ),
-    var.single_nat_gateway || var.create_elasticache_subnet_route_table ? 0 : count.index,
-  )
+    )[var.single_nat_gateway || var.create_elasticache_subnet_route_table ? 0 : count.index]
 }
 
 resource "aws_route_table_association" "intra" {
   count = var.create_vpc && length(var.intra_subnets) > 0 ? length(var.intra_subnets) : 0
 
-  subnet_id      = element(aws_subnet.intra.*.id, count.index)
-  route_table_id = element(aws_route_table.intra.*.id, 0)
+  subnet_id      = aws_subnet.intra.*.id[count.index]
+  route_table_id = aws_route_table.intra.*.id[0]
 }
 
 resource "aws_route_table_association" "public" {
   count = var.create_vpc && length(var.public_subnets) > 0 ? length(var.public_subnets) : 0
 
-  subnet_id      = element(aws_subnet.public.*.id, count.index)
+  subnet_id      = aws_subnet.public.*.id[count.index]
   route_table_id = aws_route_table.public[0].id
 }
 
@@ -1218,7 +1194,7 @@ resource "aws_vpn_gateway" "this" {
 
   tags = merge(
     {
-      "Name" = format("%s", var.name)
+      Name =format("%s", var.name)
     },
     var.tags,
     var.vpn_gateway_tags,
@@ -1235,27 +1211,21 @@ resource "aws_vpn_gateway_attachment" "this" {
 resource "aws_vpn_gateway_route_propagation" "public" {
   count = var.create_vpc && var.propagate_public_route_tables_vgw && var.enable_vpn_gateway || var.vpn_gateway_id != "" ? 1 : 0
 
-  route_table_id = element(aws_route_table.public.*.id, count.index)
-  vpn_gateway_id = element(
-    concat(
+  route_table_id = aws_route_table.public.*.id[count.index]
+  vpn_gateway_id = concat(
       aws_vpn_gateway.this.*.id,
       aws_vpn_gateway_attachment.this.*.vpn_gateway_id,
-    ),
-    count.index,
-  )
+    )[count.index]
 }
 
 resource "aws_vpn_gateway_route_propagation" "private" {
   count = var.create_vpc && var.propagate_private_route_tables_vgw && var.enable_vpn_gateway || var.vpn_gateway_id != "" ? length(var.private_subnets) : 0
 
-  route_table_id = element(aws_route_table.private.*.id, count.index)
-  vpn_gateway_id = element(
-    concat(
+  route_table_id = aws_route_table.private.*.id[count.index]
+  vpn_gateway_id = concat(
       aws_vpn_gateway.this.*.id,
       aws_vpn_gateway_attachment.this.*.vpn_gateway_id,
-    ),
-    count.index,
-  )
+    )[count.index]
 }
 
 ###########
@@ -1270,7 +1240,7 @@ resource "aws_default_vpc" "this" {
 
   tags = merge(
     {
-      "Name" = format("%s", var.default_vpc_name)
+      Name =format("%s", var.default_vpc_name)
     },
     var.tags,
     var.default_vpc_tags,
