@@ -2,9 +2,9 @@
 # terraform-aws-vpc
 
 ---
-[![shield](https://img.shields.io/github/release/marcelocorreia/terraform-aws-quick-bastion.svg?flat-square)](https://img.shields.io/github/release/marcelocorreia/terraform-aws-quick-bastion.svg?flat-square)
-[![shield](https://img.shields.io/github/languages/count/marcelocorreia/terraform-aws-quick-bastion.svg)](https://img.shields.io/github/languages/count/marcelocorreia/terraform-aws-quick-bastion.svg)
-[![shield](https://img.shields.io/github/languages/top/marcelocorreia/terraform-aws-quick-bastion.svg)](https://img.shields.io/github/languages/top/marcelocorreia/terraform-aws-quick-bastion.svg)
+[![shield](https://img.shields.io/github/release/marcelocorreia/terraform-aws-vpc.svg?flat-square)](https://img.shields.io/github/release/marcelocorreia/terraform-aws-vpc.svg?flat-square)
+[![shield](https://img.shields.io/github/languages/count/marcelocorreia/terraform-aws-vpc.svg)](https://img.shields.io/github/languages/count/marcelocorreia/terraform-aws-vpc.svg)
+[![shield](https://img.shields.io/github/languages/top/marcelocorreia/terraform-aws-vpc.svg)](https://img.shields.io/github/languages/top/marcelocorreia/terraform-aws-vpc.svg)
 ---
 ### TLDR;
 - [Overview](#overview)
