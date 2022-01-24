@@ -19,6 +19,7 @@ caller_identity: _creds
 
 release_tag: _git_update
 	./tools/semtag final -s $(RELEASE_SCOPE)
+	git push -tags
 
 _creds:
 	@$(eval export AWS_DEFAULT_REGION=$(AWS_DEFAULT_REGION))
