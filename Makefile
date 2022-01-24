@@ -17,33 +17,12 @@ stax2aws:
 caller_identity: _creds
 	@aws sts get-caller-identity
 
+release_tag: _git_update
+	./tools/semtag final -s $(RELEASE_SCOPE)
+
 _creds:
 	@$(eval export AWS_DEFAULT_REGION=$(AWS_DEFAULT_REGION))
 	@$(eval export AWS_PROFILE=$(AWS_PROFILE))
-
-tf_plan: tf_init
-	@terraform-docs md . > terraform.md
-	terraform plan --var-file $(ENV).tfvars
-	@tfsec . --out tfsec.md --tfvars-file $(ENV).tfvars
-
-tf_apply: tf_init _git_update
-	terraform apply --var-file $(ENV).tfvars -input=false
-	./tools/semtag final -s $(RELEASE_SCOPE)
-
-
-
-
-tf_destroy: tf_init
-	terraform destroy --var-file $(ENV).tfvars -input=false
-
-tf_init: _creds
-	terraform init -backend-config=$(ENV)-state.tfvars  -migrate-state
-
-tf_state_list: tf_init
-	terraform state list
-
-tf_output: tf_init
-	terraform output
 
 _git_update:
 	git add .
