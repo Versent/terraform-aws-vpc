@@ -28,9 +28,9 @@ tf_plan: tf_init
 
 tf_apply: tf_init _git_update
 	terraform apply --var-file $(ENV).tfvars -input=false
-
-release_tag: _git_update
 	./tools/semtag final -s $(RELEASE_SCOPE)
+
+
 
 
 tf_destroy: tf_init
