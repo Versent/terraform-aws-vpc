@@ -598,6 +598,8 @@ resource "aws_network_acl_rule" "private_outbound" {
   cidr_block  = var.private_outbound_acl_rules[count.index]["cidr_block"]
 }
 
+
+
 ########################
 # Intra Network ACLs
 ########################
@@ -1247,3 +1249,51 @@ resource "aws_default_vpc" "this" {
   )
 }
 
+
+variable "restricted_dedicated_network_acl" {
+  default = false
+}
+
+resource "aws_network_acl" "restricted" {
+  count = var.create_vpc && var.restricted_dedicated_network_acl && length(var.restricted_subnets) > 0 ? 1 : 0
+
+  vpc_id     = concat(aws_vpc.this.*.id, [""])[0]
+  subnet_ids = aws_subnet.restricted.*.id
+
+  tags = merge(
+  {
+    Name = format("%s-${var.restricted_subnet_suffix}", var.name)
+  },
+  var.tags,
+  var.restricted_acl_tags,
+  )
+}
+
+resource "aws_network_acl_rule" "restricted_inbound" {
+  count = var.create_vpc && var.restricted_dedicated_network_acl && length(var.restricted_subnets) > 0 ? length(var.restricted_inbound_acl_rules) : 0
+
+  network_acl_id = aws_network_acl.restricted[0].id
+
+  egress      = false
+  rule_number = var.restricted_inbound_acl_rules[count.index]["rule_number"]
+  rule_action = var.restricted_inbound_acl_rules[count.index]["rule_action"]
+  from_port   = var.restricted_inbound_acl_rules[count.index]["from_port"]
+  to_port     = var.restricted_inbound_acl_rules[count.index]["to_port"]
+  protocol    = var.restricted_inbound_acl_rules[count.index]["protocol"]
+  cidr_block  = var.restricted_inbound_acl_rules[count.index]["cidr_block"]
+}
+
+
+resource "aws_network_acl_rule" "restricted_outbound" {
+  count = var.create_vpc && var.restricted_dedicated_network_acl && length(var.restricted_subnets) > 0 ? length(var.restricted_outbound_acl_rules) : 0
+
+  network_acl_id = aws_network_acl.restricted[0].id
+
+  egress      = true
+  rule_number = var.restricted_outbound_acl_rules[count.index]["rule_number"]
+  rule_action = var.restricted_outbound_acl_rules[count.index]["rule_action"]
+  from_port   = var.restricted_outbound_acl_rules[count.index]["from_port"]
+  to_port     = var.restricted_outbound_acl_rules[count.index]["to_port"]
+  protocol    = var.restricted_outbound_acl_rules[count.index]["protocol"]
+  cidr_block  = var.restricted_outbound_acl_rules[count.index]["cidr_block"]
+}

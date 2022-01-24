@@ -1,87 +1,51 @@
-GIT_BRANCH ?= main
-GIT_REMOTE ?= origin
-RELEASE_TYPE ?= patch
+AWS_DEFAULT_REGION := ap-southeast-2
+AWS_PROFILE ?= dubber-versent-innovation
+ENV := $(AWS_PROFILE)
+RELEASE_SCOPE ?= patch
 
-fmt:
-	@terraform fmt
+.PHONY: default
+default: help
 
+help:
+	@echo "Available operations (make targets) "
+	@make -npRq | egrep -i -v 'makefile|^#|=|^\t|^\.|->|^_|^default' | grep ":" | sort | uniq | awk '{print $$1}'|sed 's/://g'
+	@exit 0
 
-init: _creds fmt
-	@terraform init
+stax2aws:
+	@stax2aws login -i stax-au1 -o versent-innovation -f -p $(AWS_PROFILE)
 
-docs:
-	terraform-docs md . > terraform.md
+caller_identity: _creds
+	@aws sts get-caller-identity
 
-.PHONY: grip
-grip:
-	grip -b
+_creds:
+	@$(eval export AWS_DEFAULT_REGION=$(AWS_DEFAULT_REGION))
+	@$(eval export AWS_PROFILE=$(AWS_PROFILE))
 
-release-zero:
-	@git tag 0.0.0
-	@git push origin --tags
+tf_plan: tf_init
+	@terraform-docs md . > terraform.md
+	terraform plan --var-file $(ENV).tfvars
+	@tfsec . --out tfsec.md --tfvars-file $(ENV).tfvars
 
-_quick-push: ;$(call git_push,"WIP")
+tf_apply: tf_init _git_update
+	terraform apply --var-file $(ENV).tfvars -input=false
 
-_setup-versions:
-	$(eval export CURRENT_VERSION=$(shell git ls-remote --tags $(GIT_REMOTE) | grep -v latest | awk '{ print $$2}'|grep -v 'stable'| sort -r --version-sort | head -n1|sed 's/refs\/tags\///g'))
-	$(eval export NEXT_VERSION=$(shell semver -c -i $(RELEASE_TYPE) $(CURRENT_VERSION)))
-
-all-versions:
-	@git ls-remote --tags $(GIT_REMOTE)
-
-current-version: _setup-versions
-	@echo $(CURRENT_VERSION)
-
-next-version: _setup-versions
-	@echo $(NEXT_VERSION)
-
-release: _setup-versions fmt docs
-	$(call git_push,"release: $(NEXT_VERSION)")
-	@git tag $(NEXT_VERSION)
-	@git push $(GIT_REMOTE) --tags
-
-define git_push
-	-git add .
-	-git commit -m $1
-	-git push
-endef
+release_tag: _git_update
+	./tools/semtag final -s $(RELEASE_SCOPE)
 
 
-#AWS_PROFILE := one
-#GITHUB_USER ?= marcelocorreia
-#GIT_REPO_NAME ?= terraform-aws-vpc
-#
-#init: _creds fmt
-#	cd example && terraform init
-#
-#plan: _creds init
-#	cd example && terraform plan
-#
-#apply: _creds fmt
-#	cd example && terraform apply --auto-approve
-#
-#destroy: _creds init
-#	cd example && terraform destroy --auto-approve
-#
-#state:
-#	cd example && terraform state list
-#
-#fmt:
-#	terraform fmt
-#
-#_creds:
-#	$(eval export AWS_PROFILE=$(AWS_PROFILE))
-#
-#
-#SCAFOLD := badwolf
-#_readme:
-#	terraform-docs md . > io.md
-#	$(SCAFOLD) generate --resource-type readme .
-#
-#
-#open-page:
-#	open https://github.com/$(GITHUB_USER)/$(GIT_REPO_NAME).git
-#
-#_grip:
-#	grip -b
-#
+tf_destroy: tf_init
+	terraform destroy --var-file $(ENV).tfvars -input=false
+
+tf_init: _creds
+	terraform init -backend-config=$(ENV)-state.tfvars  -migrate-state
+
+tf_state_list: tf_init
+	terraform state list
+
+tf_output: tf_init
+	terraform output
+
+_git_update:
+	git add .
+	git commit -m  "updating...."
+	git push
