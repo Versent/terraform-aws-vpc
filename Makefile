@@ -1,6 +1,4 @@
-AWS_DEFAULT_REGION := ap-southeast-2
 AWS_PROFILE ?= dubber-versent-innovation
-ENV := $(AWS_PROFILE)
 RELEASE_SCOPE ?= patch
 
 .PHONY: default
@@ -14,12 +12,17 @@ help:
 stax2aws:
 	@stax2aws login -i stax-au1 -o versent-innovation -f -p $(AWS_PROFILE)
 
+docs:
+	@terraform-docs md . > terraform.md
+
 caller_identity: _creds
 	@aws sts get-caller-identity
 
-release_tag: _git_update
+release_tag: _git_update docs
 	./tools/semtag final -s $(RELEASE_SCOPE)
-	git push -tags
+
+push_tags:
+	git push --tags
 
 _creds:
 	@$(eval export AWS_DEFAULT_REGION=$(AWS_DEFAULT_REGION))
