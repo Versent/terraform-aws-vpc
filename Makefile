@@ -21,6 +21,7 @@ caller_identity: _creds
 release_tag: _git_update docs
 	./tools/semtag final -s $(RELEASE_SCOPE)
 
+
 push_tags:
 	git push --tags
 
